@@ -283,18 +283,33 @@
       </div>
 
       <div class="bar-column">
-        <div class="bar-label">偏紅</div>
+        <div class="bar-label">加紅</div>
         <div class="bar" id="redBar"></div>
       </div>
 
       <div class="bar-column">
-        <div class="bar-label">偏綠</div>
+        <div class="bar-label">加綠</div>
         <div class="bar" id="greenBar"></div>
       </div>
 
       <div class="bar-column">
-        <div class="bar-label">偏藍</div>
+        <div class="bar-label">加藍</div>
         <div class="bar" id="blueBar"></div>
+      </div>
+
+      <div class="bar-column">
+        <div class="bar-label">減紅</div>
+        <div class="bar" id="minusRedBar"></div>
+      </div>
+
+      <div class="bar-column">
+        <div class="bar-label">減綠</div>
+        <div class="bar" id="minusGreenBar"></div>
+      </div>
+
+      <div class="bar-column">
+        <div class="bar-label">減藍</div>
+        <div class="bar" id="minusBlueBar"></div>
       </div>
     </div>
   </div>
@@ -382,12 +397,18 @@
       const redBar = document.getElementById('redBar');
       const greenBar = document.getElementById('greenBar');
       const blueBar = document.getElementById('blueBar');
+      const minusRedBar = document.getElementById('minusRedBar');
+      const minusGreenBar = document.getElementById('minusGreenBar');
+      const minusBlueBar = document.getElementById('minusBlueBar');
       if (input === '') {
         darkBar.innerHTML = '';
         lightBar.innerHTML = '';
         redBar.innerHTML = '';
         greenBar.innerHTML = '';
         blueBar.innerHTML = '';
+        if (minusRedBar) minusRedBar.innerHTML = '';
+        if (minusGreenBar) minusGreenBar.innerHTML = '';
+        if (minusBlueBar) minusBlueBar.innerHTML = '';
         return;
       }
       const parts = input.split(',').map(v => parseInt(v.trim()));
@@ -401,6 +422,9 @@
       redBar.innerHTML = '';
       greenBar.innerHTML = '';
       blueBar.innerHTML = '';
+      if (minusRedBar) minusRedBar.innerHTML = '';
+      if (minusGreenBar) minusGreenBar.innerHTML = '';
+      if (minusBlueBar) minusBlueBar.innerHTML = '';
       for (let p = 0; p <= 100; p += 5) {
         const kDark = 1 - p / 100;
         const dr = clamp(r * kDark);
@@ -420,6 +444,14 @@
         greenBar.appendChild(createBarSwatch(i + '%', gr, gg, gb));
         const [br, bg, bb] = adjustPreserveLuminance(r, g, b, 0, 0, amount);
         blueBar.appendChild(createBarSwatch(i + '%', br, bg, bb));
+
+        // 減色（用負的 amount）
+        const [mrr, mrg, mrb] = adjustPreserveLuminance(r, g, b, -amount, 0, 0);
+        if (minusRedBar) minusRedBar.appendChild(createBarSwatch(i + '%', mrr, mrg, mrb));
+        const [mgr, mgg, mgb] = adjustPreserveLuminance(r, g, b, 0, -amount, 0);
+        if (minusGreenBar) minusGreenBar.appendChild(createBarSwatch(i + '%', mgr, mgg, mgb));
+        const [mbr, mbg, mbb] = adjustPreserveLuminance(r, g, b, 0, 0, -amount);
+        if (minusBlueBar) minusBlueBar.appendChild(createBarSwatch(i + '%', mbr, mbg, mbb));
       }
     }
 
