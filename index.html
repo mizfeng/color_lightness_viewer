@@ -20,10 +20,48 @@
       margin-bottom: 20px;
     }
 
+    .search-box {
+      width: 920px;
+      max-width: calc(100% - 40px);
+      background: #ffffff;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin: 0 auto 20px;
+      box-sizing: border-box;
+      border-radius: 6px;
+    }
+
+    .search-box .input-area {
+      margin: 0;
+      width: 100%;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .search-box input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .search-box .preset-container {
+      justify-content: center;
+      width: 100%;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     input[type="text"] {
       width: 200px;
-      padding: 6px;
+      padding: 8px 10px;
       margin-right: 10px;
+      font-size: 16px;
     }
 
     button {
@@ -39,14 +77,14 @@
     }
 
     .preset {
-      width: 60px;
-      height: 60px;
+      width: 64px;
+      height: 64px;
       cursor: pointer;
       border: 1px solid #ccc;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 12px;
       color: #000;
       background-clip: padding-box;
     }
@@ -143,8 +181,10 @@
     }
 
     .bar-label {
-      width: 80px;
-      font-size: 14px;
+      width: 100%;
+      font-size: 16px;
+      text-align: center;
+      font-weight: 600;
     }
 
     .bar {
@@ -181,24 +221,54 @@
       line-height: 1;
     }
 
-    .swatch-rgb {
-      font-size: 11px;
-      opacity: 0.9;
+    .bar-swatch {
+      width: 100%;
+      height: 52px;
+      border: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 8px;
+      box-sizing: border-box;
+      font-size: 13px;
+      color: #000;
+    }
+
+    .swatch-percent {
+      font-weight: 700;
+      font-size: 14px;
       line-height: 1;
+    }
+
+    .swatch-rgb {
+      font-size: 13px;
+      opacity: 0.95;
+      line-height: 1;
+    }
+
+    .search-title h1 {
+      margin: 0;
+      font-size: 20px;
+      text-align: center;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>RGB 明暗色自動產生</h1>
+  <div class="search-box">
+    <div class="search-title">
+      <h1>RGB 明暗色自動產生</h1>
+    </div>
 
-  <div class="input-area">
-    <input id="rgbInput" type="text" value="84,4,4" placeholder="例如：207,158,98" />
-    <button onclick="generate()">產生顏色</button>
+    <div class="input-area">
+      <input id="rgbInput" type="text" value="84,4,4" placeholder="例如：207,158,98" />
+      <button onclick="generate()">產生顏色</button>
+    </div>
+
+    <div class="preset-container" id="presets"></div>
   </div>
-
-  <div class="preset-container" id="presets"></div>
 
   <div class="bars">
     <div class="five-row">
@@ -247,39 +317,26 @@
 
     const presetsEl = document.getElementById('presets');
 
-    presetColors.forEach(c => {
-      const div = document.createElement('div');
-      div.className = 'preset';
-      div.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
-      div.textContent = c.join(',');
-      div.onclick = () => {
-        document.getElementById('rgbInput').value = c.join(',');
-        generate();
-      };
-      presetsEl.appendChild(div);
-    });
-
-    // 根據 RGB 計算亮度並回傳適合的文字顏色（黑/白）
     function getContrastColor(r, g, b) {
       const brightness = (r * 299 + g * 587 + b * 114) / 1000;
       return brightness < 128 ? '#ffffff' : '#000000';
     }
 
-    // 重新建立 presets（使用 getContrastColor 設定文字顏色）
-    // (先清空再建立，避免重複新增，如果已經用上面的 forEach，可忽略)
-    presetsEl.innerHTML = '';
-    presetColors.forEach(c => {
-      const div = document.createElement('div');
-      div.className = 'preset';
-      div.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
-      div.style.color = getContrastColor(c[0], c[1], c[2]);
-      div.textContent = c.join(',');
-      div.onclick = () => {
-        document.getElementById('rgbInput').value = c.join(',');
-        generate();
-      };
-      presetsEl.appendChild(div);
-    });
+    function renderPresets() {
+      presetsEl.innerHTML = '';
+      presetColors.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'preset';
+        div.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
+        div.style.color = getContrastColor(c[0], c[1], c[2]);
+        div.textContent = c.join(',');
+        div.onclick = () => {
+          document.getElementById('rgbInput').value = c.join(',');
+          generate();
+        };
+        presetsEl.appendChild(div);
+      });
+    }
 
     function clamp(v) {
       return Math.max(0, Math.min(255, Math.round(v)));
@@ -291,19 +348,12 @@
 
     function adjustPreserveLuminance(r, g, b, dr, dg, db) {
       const L0 = luminance(r, g, b);
-
       let r2 = clamp(r + dr);
       let g2 = clamp(g + dg);
       let b2 = clamp(b + db);
-
       const L2 = luminance(r2, g2, b2) || 1;
       const scale = L0 / L2;
-
-      return [
-        clamp(Math.round(r2 * scale)),
-        clamp(Math.round(g2 * scale)),
-        clamp(Math.round(b2 * scale))
-      ];
+      return [clamp(Math.round(r2 * scale)), clamp(Math.round(g2 * scale)), clamp(Math.round(b2 * scale))];
     }
 
     function createBarSwatch(text, r, g, b) {
@@ -313,15 +363,12 @@
       const fg = getContrastColor(r, g, b);
       sw.style.color = fg;
       sw.title = `rgb(${r}, ${g}, ${b})`;
-
       const p = document.createElement('div');
       p.className = 'swatch-percent';
       p.textContent = text;
-
       const v = document.createElement('div');
       v.className = 'swatch-rgb';
       v.textContent = `rgb(${r}, ${g}, ${b})`;
-
       sw.appendChild(p);
       sw.appendChild(v);
       return sw;
@@ -330,14 +377,11 @@
     function generate() {
       const raw = document.getElementById('rgbInput').value || '';
       const input = raw.trim();
-
       const darkBar = document.getElementById('darkBar');
       const lightBar = document.getElementById('lightBar');
       const redBar = document.getElementById('redBar');
       const greenBar = document.getElementById('greenBar');
       const blueBar = document.getElementById('blueBar');
-
-      // 如果 input 為空，清空 bars 並安靜返回（避免重整時出現警示）
       if (input === '') {
         darkBar.innerHTML = '';
         lightBar.innerHTML = '';
@@ -346,55 +390,40 @@
         blueBar.innerHTML = '';
         return;
       }
-
       const parts = input.split(',').map(v => parseInt(v.trim()));
       if (parts.length !== 3 || parts.some(isNaN)) {
         alert('請輸入正確的 RGB 格式，例如：207,158,98');
         return;
       }
-
       const [r, g, b] = parts;
       darkBar.innerHTML = '';
       lightBar.innerHTML = '';
       redBar.innerHTML = '';
       greenBar.innerHTML = '';
       blueBar.innerHTML = '';
-
-      // 變暗 / 變亮（0% -> 100%） 使用 5% 步進
       for (let p = 0; p <= 100; p += 5) {
-        // dark
         const kDark = 1 - p / 100;
         const dr = clamp(r * kDark);
         const dg = clamp(g * kDark);
         const db = clamp(b * kDark);
         darkBar.appendChild(createBarSwatch(p + '%', dr, dg, db));
-
-        // light
         const lr = clamp(r + (255 - r) * (p / 100));
         const lg = clamp(g + (255 - g) * (p / 100));
         const lb = clamp(b + (255 - b) * (p / 100));
         lightBar.appendChild(createBarSwatch(p + '%', lr, lg, lb));
       }
-
-      // 偏色（保持亮度） 以 0% ~ 100% (每 5%) 表示偏色強度
       for (let i = 0; i <= 100; i += 5) {
         const amount = Math.round(255 * (i / 100));
-
-        // 偏紅
         const [rr, rg, rb] = adjustPreserveLuminance(r, g, b, amount, 0, 0);
         redBar.appendChild(createBarSwatch(i + '%', rr, rg, rb));
-
-        // 偏綠
         const [gr, gg, gb] = adjustPreserveLuminance(r, g, b, 0, amount, 0);
         greenBar.appendChild(createBarSwatch(i + '%', gr, gg, gb));
-
-        // 偏藍
         const [br, bg, bb] = adjustPreserveLuminance(r, g, b, 0, 0, amount);
         blueBar.appendChild(createBarSwatch(i + '%', br, bg, bb));
       }
     }
 
-    // 先產生一次，若輸入欄有預設值
+    renderPresets();
     generate();
   </script>
 
