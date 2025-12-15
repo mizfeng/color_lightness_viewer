@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>RGB 明暗色產生器</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .input-area {
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 200px;
+      padding: 6px;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    .preset-container {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .preset {
+      width: 60px;
+      height: 60px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #000;
+      background-clip: padding-box;
+    }
+
+    .result {
+      display: flex;
+      gap: 20px;
+    }
+
+    .column {
+      flex: 1;
+    }
+
+    .color-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .swatch {
+      width: 40px;
+      height: 20px;
+      margin-right: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .label {
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>RGB 明暗色自動產生</h1>
+
+  <div class="input-area">
+    <input id="rgbInput" type="text" placeholder="例如：207,158,98" />
+    <button onclick="generate()">產生顏色</button>
+  </div>
+
+  <div class="preset-container" id="presets"></div>
+
+  <div class="result">
+    <div class="column">
+      <h3>變暗（0% → 100%）</h3>
+      <div id="darkList"></div>
+    </div>
+    <div class="column">
+      <h3>變亮（0% → 100%）</h3>
+      <div id="lightList"></div>
+    </div>
+  </div>
+
+  <script>
+    const presetColors = [
+      [51, 0, 0],
+      [84, 4, 4],
+      [114, 0, 0],
+      [22, 22, 44],
+      [36, 19, 15],
+      [229, 218, 204],
+      [192, 159, 117],
+      [207, 158, 98],
+      [68, 21, 28],
+      [11, 11, 12],
+      [30, 30, 30],
+      [43, 43, 43],
+    ];
+
+    const presetsEl = document.getElementById('presets');
+
+    presetColors.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'preset';
+      div.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
+      div.textContent = c.join(',');
+      div.onclick = () => {
+        document.getElementById('rgbInput').value = c.join(',');
+        generate();
+      };
+      presetsEl.appendChild(div);
+    });
+
+    function clamp(v) {
+      return Math.max(0, Math.min(255, Math.round(v)));
+    }
+
+    function generate() {
+      const input = document.getElementById('rgbInput').value;
+      const parts = input.split(',').map(v => parseInt(v.trim()));
+      if (parts.length !== 3 || parts.some(isNaN)) {
+        alert('請輸入正確的 RGB 格式，例如：207,158,98');
+        return;
+      }
+
+      const [r, g, b] = parts;
+      const darkList = document.getElementById('darkList');
+      const lightList = document.getElementById('lightList');
+      darkList.innerHTML = '';
+      lightList.innerHTML = '';
+
+      for (let p = 0; p <= 100; p += 5) {
+        // dark
+        const kDark = 1 - p / 100;
+        const dr = clamp(r * kDark);
+        const dg = clamp(g * kDark);
+        const db = clamp(b * kDark);
+
+        darkList.appendChild(colorRow(p, dr, dg, db));
+
+        // light
+        const lr = clamp(r + (255 - r) * (p / 100));
+        const lg = clamp(g + (255 - g) * (p / 100));
+        const lb = clamp(b + (255 - b) * (p / 100));
+
+        lightList.appendChild(colorRow(p, lr, lg, lb));
+      }
+    }
+
+    function colorRow(p, r, g, b) {
+      const row = document.createElement('div');
+      row.className = 'color-row';
+
+      const swatch = document.createElement('div');
+      swatch.className = 'swatch';
+      swatch.style.background = `rgb(${r},${g},${b})`;
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = `${p}% → rgb(${r}, ${g}, ${b})`;
+
+      row.appendChild(swatch);
+      row.appendChild(label);
+      return row;
+    }
+  </script>
+
+</body>
+
+</html>
