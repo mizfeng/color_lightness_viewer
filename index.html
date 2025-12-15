@@ -131,6 +131,28 @@
       presetsEl.appendChild(div);
     });
 
+    // 根據 RGB 計算亮度並回傳適合的文字顏色（黑/白）
+    function getContrastColor(r, g, b) {
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      return brightness < 128 ? '#ffffff' : '#000000';
+    }
+
+    // 重新建立 presets（使用 getContrastColor 設定文字顏色）
+    // (先清空再建立，避免重複新增，如果已經用上面的 forEach，可忽略)
+    presetsEl.innerHTML = '';
+    presetColors.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'preset';
+      div.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
+      div.style.color = getContrastColor(c[0], c[1], c[2]);
+      div.textContent = c.join(',');
+      div.onclick = () => {
+        document.getElementById('rgbInput').value = c.join(',');
+        generate();
+      };
+      presetsEl.appendChild(div);
+    });
+
     function clamp(v) {
       return Math.max(0, Math.min(255, Math.round(v)));
     }
