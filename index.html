@@ -7,8 +7,37 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
+      padding: 8px;
+      margin: 0;
       background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-sizing: border-box;
+      min-height: 100vh;
+      /* allow mobile browsers to scale/zoom; avoid forcing hidden overflow */
+    }
+
+    @media (min-width: 1000px) {
+
+      /* Desktop: center the eight columns and remove extra horizontal padding */
+      .bars {
+        padding-left: 0;
+        padding-right: 0;
+        overflow-x: visible;
+        width: auto;
+        max-width: 1100px;
+        /* fit the 8 columns comfortably */
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .five-row {
+        justify-content: center;
+        /* allow the row to be centered within the bars container */
+        overflow-x: visible;
+        width: 100%;
+      }
     }
 
     h1 {
@@ -22,16 +51,16 @@
 
     .search-box {
       width: 920px;
-      max-width: calc(100% - 40px);
+      max-width: 980px;
       background: #ffffff;
       border: 1px solid #ddd;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-      padding: 14px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      margin: 0 auto 20px;
+      gap: 8px;
+      margin: 0 auto 16px;
       box-sizing: border-box;
       border-radius: 6px;
     }
@@ -118,38 +147,46 @@
     .bars {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
       margin: 0 auto;
-      max-width: 1100px;
+      width: 100%;
+      max-width: 100%;
       align-items: center;
-    }
-
-    .bar-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .top-row {
-      display: flex;
-      gap: 20px;
-      align-items: flex-start;
+      padding: 0 12px;
+      /* give some safe padding so leftmost column isn't flush */
+      box-sizing: border-box;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-padding-left: 12px;
     }
 
     .five-row {
       display: flex;
-      gap: 20px;
+      gap: 8px;
       align-items: flex-start;
       width: 100%;
-      justify-content: space-between;
+      justify-content: flex-start;
+      /* align to start so leftmost is visible */
+      flex-wrap: nowrap;
+      /* try to keep columns on a single row */
+      overflow-x: visible;
+      min-width: 960px;
+      /* ensure a minimum layout width so small devices will scale */
+      padding-bottom: 6px;
+      box-sizing: border-box;
     }
 
     .bar-column {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      flex: 1 1 220px;
-      min-width: 180px;
+      gap: 4px;
+      /* reduce vertical gap between label and swatches */
+      flex: 0 0 180px;
+      /* fixed width per column */
+      width: 130px;
+      min-width: 130px;
+      max-width: 130px;
+      box-sizing: border-box;
     }
 
     .biases {
@@ -171,12 +208,21 @@
         align-items: center;
       }
 
+      .five-row {
+        flex-direction: column;
+        /* stack columns on small screens */
+        flex-wrap: nowrap;
+        overflow-x: visible;
+        align-items: center;
+      }
+
       .bar {
-        max-height: 260px;
+        max-height: none;
       }
 
       .bar-swatch {
         height: 36px;
+        width: 80%;
       }
     }
 
@@ -189,27 +235,34 @@
 
     .bar {
       display: flex;
-      gap: 6px;
+      gap: 4px;
+      /* tighten spacing between swatches */
       align-items: stretch;
       flex-direction: column;
       flex-wrap: nowrap;
       overflow: visible;
-      padding: 6px;
+      padding: 4px;
+      /* reduce inner padding */
       background: #fff;
       border: 1px solid #ddd;
-      flex: 1;
+      flex: none;
+      width: 100%;
       max-height: none;
     }
 
     .bar-swatch {
-      width: 100%;
-      height: 44px;
+      width: 50%;
+      height: 30px;
+      /* slightly shorter */
+      margin: 2px auto;
+      /* small vertical margin */
       border: 1px solid #ccc;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 4px 6px;
+      padding: 2px 6px;
+      /* reduce padding */
       box-sizing: border-box;
       font-size: 11px;
       color: #000;
@@ -223,7 +276,8 @@
 
     .bar-swatch {
       width: 100%;
-      height: 52px;
+      height: 48px;
+      margin: 0;
       border: 1px solid #ccc;
       display: flex;
       flex-direction: column;
@@ -251,6 +305,22 @@
       margin: 0;
       font-size: 20px;
       text-align: center;
+    }
+
+    /* Ensure .bars is centered on desktop by overriding earlier rules */
+    @media (min-width: 1000px) {
+      .bars {
+        width: auto !important;
+        max-width: 1100px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+
+      .five-row {
+        justify-content: center !important;
+      }
     }
   </style>
 </head>
