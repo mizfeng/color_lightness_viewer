@@ -76,6 +76,116 @@
     .label {
       font-size: 12px;
     }
+
+    .bars {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 0 auto;
+      max-width: 1100px;
+      align-items: center;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .top-row {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .five-row {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .bar-column {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1 1 220px;
+      min-width: 180px;
+    }
+
+    .biases {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    @media (max-width: 900px) {
+      .top-row {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .biases {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .bar {
+        max-height: 260px;
+      }
+
+      .bar-swatch {
+        height: 36px;
+      }
+    }
+
+    .bar-label {
+      width: 80px;
+      font-size: 14px;
+    }
+
+    .bar {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      overflow: visible;
+      padding: 6px;
+      background: #fff;
+      border: 1px solid #ddd;
+      flex: 1;
+      max-height: none;
+    }
+
+    .bar-swatch {
+      width: 100%;
+      height: 44px;
+      border: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 6px;
+      box-sizing: border-box;
+      font-size: 11px;
+      color: #000;
+    }
+
+    .swatch-percent {
+      font-weight: 600;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .swatch-rgb {
+      font-size: 11px;
+      opacity: 0.9;
+      line-height: 1;
+    }
   </style>
 </head>
 
@@ -84,20 +194,38 @@
   <h1>RGB 明暗色自動產生</h1>
 
   <div class="input-area">
-    <input id="rgbInput" type="text" placeholder="例如：207,158,98" />
+    <input id="rgbInput" type="text" value="84,4,4" placeholder="例如：207,158,98" />
     <button onclick="generate()">產生顏色</button>
   </div>
 
   <div class="preset-container" id="presets"></div>
 
-  <div class="result">
-    <div class="column">
-      <h3>變暗（0% → 100%）</h3>
-      <div id="darkList"></div>
-    </div>
-    <div class="column">
-      <h3>變亮（0% → 100%）</h3>
-      <div id="lightList"></div>
+  <div class="bars">
+    <div class="five-row">
+      <div class="bar-column">
+        <div class="bar-label">變亮</div>
+        <div class="bar" id="lightBar"></div>
+      </div>
+
+      <div class="bar-column">
+        <div class="bar-label">變暗</div>
+        <div class="bar" id="darkBar"></div>
+      </div>
+
+      <div class="bar-column">
+        <div class="bar-label">偏紅</div>
+        <div class="bar" id="redBar"></div>
+      </div>
+
+      <div class="bar-column">
+        <div class="bar-label">偏綠</div>
+        <div class="bar" id="greenBar"></div>
+      </div>
+
+      <div class="bar-column">
+        <div class="bar-label">偏藍</div>
+        <div class="bar" id="blueBar"></div>
+      </div>
     </div>
   </div>
 
@@ -157,8 +285,68 @@
       return Math.max(0, Math.min(255, Math.round(v)));
     }
 
+    function luminance(r, g, b) {
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+
+    function adjustPreserveLuminance(r, g, b, dr, dg, db) {
+      const L0 = luminance(r, g, b);
+
+      let r2 = clamp(r + dr);
+      let g2 = clamp(g + dg);
+      let b2 = clamp(b + db);
+
+      const L2 = luminance(r2, g2, b2) || 1;
+      const scale = L0 / L2;
+
+      return [
+        clamp(Math.round(r2 * scale)),
+        clamp(Math.round(g2 * scale)),
+        clamp(Math.round(b2 * scale))
+      ];
+    }
+
+    function createBarSwatch(text, r, g, b) {
+      const sw = document.createElement('div');
+      sw.className = 'bar-swatch';
+      sw.style.background = `rgb(${r},${g},${b})`;
+      const fg = getContrastColor(r, g, b);
+      sw.style.color = fg;
+      sw.title = `rgb(${r}, ${g}, ${b})`;
+
+      const p = document.createElement('div');
+      p.className = 'swatch-percent';
+      p.textContent = text;
+
+      const v = document.createElement('div');
+      v.className = 'swatch-rgb';
+      v.textContent = `rgb(${r}, ${g}, ${b})`;
+
+      sw.appendChild(p);
+      sw.appendChild(v);
+      return sw;
+    }
+
     function generate() {
-      const input = document.getElementById('rgbInput').value;
+      const raw = document.getElementById('rgbInput').value || '';
+      const input = raw.trim();
+
+      const darkBar = document.getElementById('darkBar');
+      const lightBar = document.getElementById('lightBar');
+      const redBar = document.getElementById('redBar');
+      const greenBar = document.getElementById('greenBar');
+      const blueBar = document.getElementById('blueBar');
+
+      // 如果 input 為空，清空 bars 並安靜返回（避免重整時出現警示）
+      if (input === '') {
+        darkBar.innerHTML = '';
+        lightBar.innerHTML = '';
+        redBar.innerHTML = '';
+        greenBar.innerHTML = '';
+        blueBar.innerHTML = '';
+        return;
+      }
+
       const parts = input.split(',').map(v => parseInt(v.trim()));
       if (parts.length !== 3 || parts.some(isNaN)) {
         alert('請輸入正確的 RGB 格式，例如：207,158,98');
@@ -166,45 +354,48 @@
       }
 
       const [r, g, b] = parts;
-      const darkList = document.getElementById('darkList');
-      const lightList = document.getElementById('lightList');
-      darkList.innerHTML = '';
-      lightList.innerHTML = '';
+      darkBar.innerHTML = '';
+      lightBar.innerHTML = '';
+      redBar.innerHTML = '';
+      greenBar.innerHTML = '';
+      blueBar.innerHTML = '';
 
+      // 變暗 / 變亮（0% -> 100%） 使用 5% 步進
       for (let p = 0; p <= 100; p += 5) {
         // dark
         const kDark = 1 - p / 100;
         const dr = clamp(r * kDark);
         const dg = clamp(g * kDark);
         const db = clamp(b * kDark);
-
-        darkList.appendChild(colorRow(p, dr, dg, db));
+        darkBar.appendChild(createBarSwatch(p + '%', dr, dg, db));
 
         // light
         const lr = clamp(r + (255 - r) * (p / 100));
         const lg = clamp(g + (255 - g) * (p / 100));
         const lb = clamp(b + (255 - b) * (p / 100));
+        lightBar.appendChild(createBarSwatch(p + '%', lr, lg, lb));
+      }
 
-        lightList.appendChild(colorRow(p, lr, lg, lb));
+      // 偏色（保持亮度） 以 0% ~ 100% (每 5%) 表示偏色強度
+      for (let i = 0; i <= 100; i += 5) {
+        const amount = Math.round(255 * (i / 100));
+
+        // 偏紅
+        const [rr, rg, rb] = adjustPreserveLuminance(r, g, b, amount, 0, 0);
+        redBar.appendChild(createBarSwatch(i + '%', rr, rg, rb));
+
+        // 偏綠
+        const [gr, gg, gb] = adjustPreserveLuminance(r, g, b, 0, amount, 0);
+        greenBar.appendChild(createBarSwatch(i + '%', gr, gg, gb));
+
+        // 偏藍
+        const [br, bg, bb] = adjustPreserveLuminance(r, g, b, 0, 0, amount);
+        blueBar.appendChild(createBarSwatch(i + '%', br, bg, bb));
       }
     }
 
-    function colorRow(p, r, g, b) {
-      const row = document.createElement('div');
-      row.className = 'color-row';
-
-      const swatch = document.createElement('div');
-      swatch.className = 'swatch';
-      swatch.style.background = `rgb(${r},${g},${b})`;
-
-      const label = document.createElement('div');
-      label.className = 'label';
-      label.textContent = `${p}% → rgb(${r}, ${g}, ${b})`;
-
-      row.appendChild(swatch);
-      row.appendChild(label);
-      return row;
-    }
+    // 先產生一次，若輸入欄有預設值
+    generate();
   </script>
 
 </body>
